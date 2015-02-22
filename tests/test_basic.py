@@ -34,11 +34,21 @@ class MyTestCase(unittest.TestCase):
 
     def test_call(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"Identifier","name":"func"},"arguments":[{"type":"Literal","value":5,"raw":"5"},{"type":"Identifier","name":"a"}]}}]})
-        self.assertEqual("func(5, a)",result)
+        self.assertEqual("func(5, a)", result)
 
     def test_declaration(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":None}],"kind":"var"}]})
-        self.assertEqual("var a;",result)
+        self.assertEqual("var a;", result)
+
+        result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"Literal","value":5,"raw":"5"}}],"kind":"var"}]})
+        self.assertEqual("var a = 5;", result)
+
+        result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"Literal","value":5,"raw":"5"}},{"type":"VariableDeclarator","id":{"type":"Identifier","name":"b"},"init":None},{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c"},"init":{"type":"Literal","value":0.9,"raw":"0.9"}}],"kind":"var"}]})
+        self.assertEqual("var a = 5, b, c = 0.9;", result)
+
+    def test_function_expression(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"FunctionExpression","id":None,"params":[],"defaults":[],"body":{"type":"BlockStatement","body":[]},"rest":None,"generator":False,"expression":False}}],"kind":"var"}]})
+        self.assertEqual("var a = function() {\n};", result)
 
 if __name__ == '__main__':
     unittest.main()

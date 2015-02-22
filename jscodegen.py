@@ -66,111 +66,138 @@ BinaryPrecedence = {
 
 class CodeGenerator:
 
-    @staticmethod
-    def program(stmt):
+    def __init__(self, options):
+        pass
+
+
+    def program(self, stmt):
         result = []
         for b in stmt['body']:
-            result += generate_statement(b)
+            result += self.generate_statement(b)
         return "".join(result)
 
-    @staticmethod
-    def expressionstatement(stmt):
-        result = [generate_expression(stmt['expression'], Precedence.Sequence)]
+    def expressionstatement(self, stmt):
+        result = [self.generate_expression(stmt['expression'], Precedence.Sequence)]
         return " ".join(result)
 
-    @staticmethod
-    def binaryexpression(expr, precedence):
+    def binaryexpression(self, expr, precedence):
         operator = expr['operator']
         current_precedence = BinaryPrecedence[operator]
         result = [
-            generate_expression(expr['left'], current_precedence),
+            self.generate_expression(expr['left'], current_precedence),
             operator,
-            generate_expression(expr['right'], current_precedence)
+            self.generate_expression(expr['right'], current_precedence)
         ]
-        return parenthesize(" ".join(result), current_precedence, precedence)
+        return self.parenthesize(" ".join(result), current_precedence, precedence)
 
-    @staticmethod
-    def unaryexpression(expr, precedence):
+    def unaryexpression(self, expr, precedence):
         operator = expr['operator']
-        result = operator + (" " if len(operator) > 2 else "") + generate_expression(expr['argument'], Precedence.Unary)
-        return parenthesize(result, Precedence.Unary, precedence)
+        result = operator + (" " if len(operator) > 2 else "") + self.generate_expression(expr['argument'], Precedence.Unary)
+        return self.parenthesize(result, Precedence.Unary, precedence)
 
-    @staticmethod
-    def updateexpression(expr, precedence):
+    def updateexpression(self, expr, precedence):
         operator = expr['operator']
         if expr["prefix"]:
-            return parenthesize(operator + generate_expression(expr['argument'], Precedence.Unary), Precedence.Unary, precedence)
+            return self.parenthesize(operator + self.generate_expression(expr['argument'], Precedence.Unary), Precedence.Unary, precedence)
         else:
-            return parenthesize(generate_expression(expr['argument'], Precedence.Postfix) + operator, Precedence.Postfix, precedence)
+            return self.parenthesize(self.generate_expression(expr['argument'], Precedence.Postfix) + operator, Precedence.Postfix, precedence)
 
-    @staticmethod
-    def memberexpression(expr, precedence):
-        result = [ generate_expression(expr['object'], Precedence.Call) ]
+    def memberexpression(self, expr, precedence):
+        result = [self.generate_expression(expr['object'], Precedence.Call) ]
         if expr['computed']:
-            result += ["[", generate_expression(expr['property'], Precedence.Sequence), "]"]
+            result += ["[", self.generate_expression(expr['property'], Precedence.Sequence), "]"]
         else:
-            result += [".", generate_expression(expr['property'], Precedence.Sequence)]
+            result += [".", self.generate_expression(expr['property'], Precedence.Sequence)]
 
-        return parenthesize("".join(result), Precedence.Member, precedence);
+        return self.parenthesize("".join(result), Precedence.Member, precedence);
 
-    @staticmethod
-    def callexpression(expr, precedence):
-        result = [ generate_expression(expr['callee'], Precedence.Call), '(' ]
+    def callexpression(self, expr, precedence):
+        result = [self.generate_expression(expr['callee'], Precedence.Call), '(' ]
         args = []
         for arg in expr['arguments']:
-            args.append(generate_expression(arg, Precedence.Assignment))
+            args.append(self.generate_expression(arg, Precedence.Assignment))
 
         result.append(", ".join(args))
         result.append(')')
         return "".join(result)
 
-    @staticmethod
-    def identifier(expr, current_precedence):
-        name = expr['name']
-        # print(value)
-        return name
+    def identifier(self, expr, precedence):
+        return self.generate_identifier(expr)
 
-    @staticmethod
-    def literal(expr, current_precedence):
+    def literal(self, expr, precedence):
         value = expr['value']
         # print(value)
         return str(value)
 
-    @staticmethod
-    def variabledeclaration(stmt):
+    def variabledeclaration(self, stmt):
         kind = stmt["kind"]
         declarations = []
         for declaration in stmt['declarations']:
-            declarations.append(generate_expression())
+            declarations.append(self.generate_statement(declaration))
         return kind + " " + ", ".join(declarations) + ";"
 
-def parenthesize(text, current, should):
-    if current < should:
-        return '(' + text + ')'
-    return text
+    def variabledeclarator(self, stmt):
+        result = self.generate_expression(stmt['id'], Precedence.Assignment)
+        if stmt['init']:
+            result += " = " + self.generate_expression(stmt['init'], Precedence.Assignment)
+        return result
+
+    def functionexpression(self, expr, precedence):
+        result = ['function']
+        if expr['id']:
+            result.append(self.generate_identifier(expr['id']))
+
+        result.append(self.generate_function_body(expr))
+        result.append(self.generate_statement(expr["body"]))
+        return "".join(result)
+
+    def blockstatement(self, stmt):
+        result = " {\n"
+        return result + "}"
+
+    def parenthesize(self, text, current, should):
+        if current < should:
+            return '(' + text + ')'
+        return text
 
 
-def is_statement(node):
-    return Syntax(node["type"]) in STATEMENTS
+    def is_statement(self, node):
+        return Syntax(node["type"]) in STATEMENTS
 
 
-def generate_expression(expr, precedence):
-    node_type = expr["type"]
-    attr = getattr(CodeGenerator, node_type.lower())
-    # print(attr, precedence)
-    return attr(expr, precedence)
+    def generate_function_params(self, node):
+        params = []
+        for param in node['params']:
+            params.append(self.generate_identifier(param))
+        return '(' + ", ".join(params) + ')'
 
+    def generate_function_body(self, node):
+        result = self.generate_function_params(node)
+        return result
 
-def generate_statement(stmt):
-    node_type = stmt["type"]
-    attr = getattr(CodeGenerator, node_type.lower())
-    # print(attr)
-    return attr(stmt)
+    def generate_expression(self, expr, precedence):
+        node_type = expr["type"]
+        attr = getattr(self, node_type.lower())
+        # print(attr, precedence)
+        return attr(expr, precedence)
+
+    def generate_statement(self, stmt):
+        node_type = stmt["type"]
+        attr = getattr(self, node_type.lower())
+        # print(attr)
+        return attr(stmt)
+
+    def generate_identifier(self, node):
+        return node["name"]
+
+    def generate(self, node):
+        if self.is_statement(node):
+            return self.generate_statement(node)
+        else:
+            print("Unknown", node["type"])
+        pass
 
 
 def generate(node, options=None):
-    if is_statement(node):
-        return generate_statement(node)
-    else:
-        print("Unknown", node["type"])
-    pass
+    g = CodeGenerator(options)
+    return g.generate(node)
