@@ -1,13 +1,5 @@
-from enum import Enum, IntEnum
-
-
-class Syntax(Enum):
-    BlockStatement = "BlockStatement"
-    Program = "Program"
-    ExpressionStatement = "ExpressionStatement"
-
-STATEMENTS = {Syntax.BlockStatement, Syntax.Program}
-
+from enum import IntEnum
+from syntax import Syntax, Statements
 
 class Precedence(IntEnum):
     Sequence = 0
@@ -65,6 +57,7 @@ BinaryPrecedence = {
 
 
 class CodeGenerator:
+    space = " "
 
     def __init__(self, options):
         pass
@@ -77,8 +70,30 @@ class CodeGenerator:
         return "".join(result)
 
     def expressionstatement(self, stmt):
-        result = [self.generate_expression(stmt['expression'], Precedence.Sequence)]
-        return " ".join(result)
+        result = self.generate_expression(stmt['expression'], Precedence.Sequence)
+        return result + ";"
+
+    def forstatement(self, stmt):
+        result = "for ("
+        if stmt['init']:
+            result += self.generate_expression(stmt['init'], Precedence.Sequence)
+        result += ";"
+
+        if stmt['test']:
+            result += self.space + self.generate_expression(stmt['test'], Precedence.Sequence)
+        result += ";"
+
+        if stmt['update']:
+            result += self.space + self.generate_expression(stmt['update'], Precedence.Sequence)
+        result += ")"
+
+        result += self.space + self.generate_statement(stmt["body"])
+        return result
+
+    def assignmentexpression(self, expr, precedence):
+        left = self.generate_expression(expr['left'], Precedence.Call)
+        right = self.generate_expression(expr['right'], Precedence.Assignment)
+        return self.parenthesize(left + self.space + expr['operator'] + self.space + right, Precedence.Assignment, precedence)
 
     def binaryexpression(self, expr, precedence):
         operator = expr['operator']
@@ -101,6 +116,14 @@ class CodeGenerator:
             return self.parenthesize(operator + self.generate_expression(expr['argument'], Precedence.Unary), Precedence.Unary, precedence)
         else:
             return self.parenthesize(self.generate_expression(expr['argument'], Precedence.Postfix) + operator, Precedence.Postfix, precedence)
+
+    def newexpression(self, expr, precedence):
+        result = 'new '
+        result += self.generate_expression(expr['callee'], Precedence.New)
+        result += "("
+        result += ", ".join([self.generate_expression(x, Precedence.Assignment) for x in expr['arguments']])
+        return result + ")"
+
 
     def memberexpression(self, expr, precedence):
         result = [self.generate_expression(expr['object'], Precedence.Call) ]
@@ -126,7 +149,8 @@ class CodeGenerator:
 
     def literal(self, expr, precedence):
         value = expr['value']
-        # print(value)
+        if isinstance(value, str):
+            return "'%s'" % value
         return str(value)
 
     def variabledeclaration(self, stmt):
@@ -148,21 +172,25 @@ class CodeGenerator:
             result.append(self.generate_identifier(expr['id']))
 
         result.append(self.generate_function_body(expr))
+        result.append(self.space)
         result.append(self.generate_statement(expr["body"]))
         return "".join(result)
 
     def blockstatement(self, stmt):
-        result = " {\n"
-        return result + "}"
+        result = ["{"]
+        body = stmt['body']
+        for bstmt in body:
+            result.append(self.generate_statement(bstmt))
+        result.append("}")
+        return "\n".join(result)
 
     def parenthesize(self, text, current, should):
         if current < should:
             return '(' + text + ')'
         return text
 
-
     def is_statement(self, node):
-        return Syntax(node["type"]) in STATEMENTS
+        return Syntax(node["type"]) in Statements
 
 
     def generate_function_params(self, node):
