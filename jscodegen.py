@@ -186,6 +186,10 @@ class CodeGenerator:
         value = expr['value']
         if isinstance(value, str):
             return "'%s'" % value
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if value == None:
+            return "null"
         return str(value)
 
     def variabledeclaration(self, stmt):

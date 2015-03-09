@@ -6,6 +6,20 @@ import jscodegen
 
 class BaseTestCase(unittest.TestCase):
 
+    def test_literals(self):
+        # true
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"Literal","value":True,"raw":"true"}}]})
+        self.assertEqual("true;", result)
+
+        # false
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"Literal","value":False,"raw":"true"}}]})
+        self.assertEqual("false;", result)
+
+        # null
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"Literal","value":None,"raw":"null"}}]})
+        self.assertEqual("null;", result)
+
+
     def test_update_expression(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i"},"prefix":True}}]})
         self.assertEqual("++i;", result)
@@ -85,6 +99,9 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c"},"init":{"type":"ArrayExpression","elements":[{"type":"Literal","value":1,"raw":"1"},{"type":"Literal","value":2,"raw":"2"},{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":3,"raw":"3"},"right":{"type":"Literal","value":4,"raw":"4"}}]}}],"kind":"var"}]})
         self.assertEqual("var c = [1, 2, 3 + 4];", result)
 
+    def test_break_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"WhileStatement","test":{"type":"Literal","value":True,"raw":"true"},"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}},"consequent":{"type":"BlockStatement","body":[{"type":"BreakStatement","label":None}]},"alternate":None}]}}]})
+        self.assertEqual("while (true) {\nif (a < 5) {\nbreak;\n}\n}", result)
 
 if __name__ == '__main__':
     unittest.main()
