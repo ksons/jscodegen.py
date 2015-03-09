@@ -146,5 +146,9 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"SequenceExpression","expressions":[{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"temp"},"right":{"type":"Literal","value":"1","raw":"\"1\""}},{"type":"Identifier","name":"a"},{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i"},"prefix":True}]}}]})
         self.assertEqual("temp = '1', a, ++i;", result)
 
+    def test_try_catch_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"TryStatement","block":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"a"},"right":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"b"},"property":{"type":"Identifier","name":"prop"}}}}]},"guardedHandlers":[],"handlers":[{"type":"CatchClause","param":{"type":"Identifier","name":"e"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"Identifier","name":"doSomething"},"arguments":[]}}]}}],"finalizer":None}]})
+        self.assertEqual("try {\na = b.prop;\n} catch (e){\ndoSomething();\n}", result)
+
 if __name__ == '__main__':
     unittest.main()

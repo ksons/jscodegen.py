@@ -286,6 +286,17 @@ class CodeGenerator:
         result.append("}")
         return "\n".join(result)
 
+    def trystatement(self, stmt):
+        result = "try" + self.space
+        result += self.generate_statement(stmt['block'])
+        result += "\n".join([self.generate_statement(s) for s in stmt['handlers']])
+        return result
+
+    def catchclause(self, stmt):
+        result = self.space + "catch" + self.space + "(%s)" % self.generate_expression(stmt['param'], Precedence.Sequence)
+        result += self.generate_statement(stmt['body'])
+        return result
+
     def parenthesize(self, text, current, should):
         if current < should:
             return '(' + text + ')'
