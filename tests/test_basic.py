@@ -165,5 +165,9 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"ObjectExpression","properties":[{"type":"Property","key":{"type":"Identifier","name":"a"},"value":{"type":"Literal","value":42,"raw":"42"},"kind":"init"},{"type":"Property","key":{"type":"Literal","value":"b","raw":"\"b\""},"value":{"type":"Literal","value":"string","raw":"\"string\""},"kind":"init"},{"type":"Property","key":{"type":"Identifier","name":"f"},"value":{"type":"FunctionExpression","id":None,"params":[{"type":"Identifier","name":"e"}],"defaults":[],"body":{"type":"BlockStatement","body":[{"type":"ReturnStatement","argument":{"type":"Identifier","name":"e"}}]},"rest":None,"generator":False,"expression":False},"kind":"init"}]}}],"kind":"var"}]})
         self.assertEqual("var a = {\na: 42,\n'b': 'string',\nf: function(e) {\nreturn e;\n}\n};", result)
 
+    def test_throw_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ThrowStatement","argument":{"type":"NewExpression","callee":{"type":"Identifier","name":"Error"},"arguments":[{"type":"Literal","value":"failure","raw":"\"failure\""}]}}]})
+        self.assertEqual("throw new Error('failure');", result)
+
 if __name__ == '__main__':
     unittest.main()

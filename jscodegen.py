@@ -253,6 +253,9 @@ class CodeGenerator:
         result.append(')')
         return "".join(result)
 
+    def throwstatement(self, stmt):
+        return "throw %s;" % self.generate_expression(stmt['argument'], Precedence.Sequence)
+
     def identifier(self, expr, precedence):
         return self.generate_identifier(expr)
 
