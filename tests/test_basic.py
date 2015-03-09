@@ -19,6 +19,9 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"Literal","value":None,"raw":"null"}}]})
         self.assertEqual("null;", result)
 
+    def test_this_expression(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"ThisExpression"}}]})
+        self.assertEqual("this;", result)
 
     def test_update_expression(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i"},"prefix":True}}]})
@@ -121,6 +124,27 @@ class BaseTestCase(unittest.TestCase):
     def test_continue_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"WhileStatement","test":{"type":"Literal","value":True,"raw":"true"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"a"},"prefix":False}},{"type":"IfStatement","test":{"type":"BinaryExpression","operator":">","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}},"consequent":{"type":"ContinueStatement","label":None},"alternate":None}]}}]})
         self.assertEqual("while (true) {\na++;\nif (a > 5) continue;\n}", result)
+
+    def test_for_in_statement(self):
+        # with declaration
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ForInStatement","left":{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"prop"},"init":None}],"kind":"var"},"right":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"MemberExpression","computed":True,"object":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"property":{"type":"Identifier","name":"prop"}}]}}]},"each":False}]})
+        self.assertEqual("for (var prop in document.body) {\nconsole.log(document.body[prop]);\n}", result)
+
+        # w/o declaration
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ForInStatement","left":{"type":"Identifier","name":"prop"},"right":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"MemberExpression","computed":True,"object":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"property":{"type":"Identifier","name":"prop"}}]}}]},"each":False}]})
+        self.assertEqual("for (prop in document.body) {\nconsole.log(document.body[prop]);\n}", result)
+
+    def test_do_while(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"DoWhileStatement","body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"a"},"prefix":True}}]},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}}}]})
+        self.assertEqual("do {\n++a;\n}(a < 5);", result)
+
+    def test_switch_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"SwitchStatement","discriminant":{"type":"Identifier","name":"a"},"cases":[{"type":"SwitchCase","test":{"type":"Literal","value":"a","raw":"\"a\""},"consequent":[{"type":"BreakStatement","label":None}]},{"type":"SwitchCase","test":{"type":"Literal","value":42,"raw":"42"},"consequent":[]},{"type":"SwitchCase","test":{"type":"Literal","value":43,"raw":"43"},"consequent":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"Identifier","name":"a"}]}},{"type":"BreakStatement","label":None}]},{"type":"SwitchCase","test":None,"consequent":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"Literal","value":"not found","raw":"\"not found\""}]}}]}]}]})
+        self.assertEqual("switch (a) {\ncase 'a':\nbreak;\ncase 42:\ncase 43:\nconsole.log(a);\nbreak;\ndefault:\nconsole.log('not found');\n}", result)
+
+    def test_sequence_expression(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"SequenceExpression","expressions":[{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"temp"},"right":{"type":"Literal","value":"1","raw":"\"1\""}},{"type":"Identifier","name":"a"},{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i"},"prefix":True}]}}]})
+        self.assertEqual("temp = '1', a, ++i;", result)
 
 if __name__ == '__main__':
     unittest.main()

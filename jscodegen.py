@@ -90,10 +90,57 @@ class CodeGenerator:
         result += self.space + self.generate_statement(stmt["body"])
         return result
 
+    def forinstatement(self, stmt):
+        if stmt['left']['type'] == "VariableDeclaration":
+            left = stmt['left']['kind'] + " " + self.generate_statement(stmt['left']['declarations'][0])
+        else:
+            left = self.generate_expression(stmt['left'], Precedence.Call)
+
+        result = "for" + self.space + "(%s in %s)" % (left, self.generate_expression(stmt['right'], Precedence.Sequence))
+
+        result += self.space + self.generate_statement(stmt["body"])
+        return result
+
+    def dowhilestatement(self, stmt):
+        result = "do" + self.space + self.generate_statement(stmt['body'])
+        result += "(%s);" % self.generate_expression(stmt['test'], Precedence.Sequence)
+        return result
+
+    def switchstatement(self, stmt):
+        cases = stmt['cases']
+        fragments = []
+
+        result =  "switch" + self.space + "(%s)" % self.generate_expression(stmt['discriminant'], Precedence.Sequence)
+        result += self.space + "{\n"
+        for case in cases:
+            fragments.append(self.generate_statement(case))
+
+        return result + "".join(fragments) + "}"
+
+    def switchcase(self, stmt):
+        if stmt['test']:
+            result = "case %s:\n" % self.generate_expression(stmt['test'], Precedence.Sequence)
+        else:
+            result = "default:\n"
+
+        for consequent in stmt['consequent']:
+            result += self.generate_statement(consequent) + "\n"
+        return result
+
     def assignmentexpression(self, expr, precedence):
         left = self.generate_expression(expr['left'], Precedence.Call)
         right = self.generate_expression(expr['right'], Precedence.Assignment)
         return self.parenthesize(left + self.space + expr['operator'] + self.space + right, Precedence.Assignment, precedence)
+
+    def sequenceexpression(self, expr, precedence):
+        result = [self.generate_expression(e, Precedence.Assignment) for e in expr['expressions']]
+        return self.parenthesize(", ".join(result), Precedence.Sequence, precedence)
+
+    def thisexpression(self, expr, precedence):
+        return "this"
+
+    def emptystatement(self, stmt):
+        return ";"
 
     def binaryexpression(self, expr, precedence):
         operator = expr['operator']
