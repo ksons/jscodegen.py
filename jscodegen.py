@@ -124,6 +124,13 @@ class CodeGenerator:
         result += ", ".join([self.generate_expression(x, Precedence.Assignment) for x in expr['arguments']])
         return result + ")"
 
+    def conditionalexpression(self, expr, precedence):
+        result = self.generate_expression(expr['test'], Precedence.LogicalOR)
+        result += self.space + '?' + self.space
+        result += self.generate_expression(expr['consequent'], Precedence.Assignment)
+        result += self.space + ':' + self.space
+        result += self.generate_expression(expr['alternate'], Precedence.Assignment)
+        return result
 
     def memberexpression(self, expr, precedence):
         result = [self.generate_expression(expr['object'], Precedence.Call) ]
@@ -206,7 +213,6 @@ class CodeGenerator:
     def generate_expression(self, expr, precedence):
         node_type = expr["type"]
         attr = getattr(self, node_type.lower())
-        # print(attr, precedence)
         return attr(expr, precedence)
 
     def generate_statement(self, stmt):
@@ -216,7 +222,7 @@ class CodeGenerator:
         return attr(stmt)
 
     def generate_identifier(self, node):
-        return node["name"]
+        return str(node["name"])
 
     def generate(self, node):
         if self.is_statement(node):
