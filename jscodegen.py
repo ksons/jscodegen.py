@@ -107,6 +107,9 @@ class CodeGenerator:
         ]
         return self.parenthesize("".join(result), current_precedence, precedence)
 
+    def logicalexpression(self, expr, precedence):
+        return self.binaryexpression(expr, precedence)
+
     def unaryexpression(self, expr, precedence):
         operator = expr['operator']
         result = operator + (" " if len(operator) > 2 else "") + self.generate_expression(expr['argument'], Precedence.Unary)
@@ -133,6 +136,11 @@ class CodeGenerator:
         result += self.space + ':' + self.space
         result += self.generate_expression(expr['alternate'], Precedence.Assignment)
         return result
+
+    def continuestatement(self, stmt):
+        if stmt['label']:
+            return "continue %s;" % stmt['label'].name
+        return "continue;"
 
     def breakstatement(self, stmt):
         if stmt['label']:

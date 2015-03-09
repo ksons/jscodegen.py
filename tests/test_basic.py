@@ -35,6 +35,10 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":4,"raw":"4"},"right":{"type":"Literal","value":5,"raw":"5"}}}]})
         self.assertEqual( "4 + 5;", result)
 
+    def test_logical_expression(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"LogicalExpression","operator":"||","left":{"type":"Identifier","name":"a"},"right":{"type":"Identifier","name":"b"}}}]})
+        self.assertEqual("a || b;", result)
+
     def test_member_expression(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"Math"},"property":{"type":"Identifier","name":"cos"}},"arguments":[{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"Math"},"property":{"type":"Identifier","name":"PI"}}]}}]})
         self.assertEqual("Math.cos(Math.PI);", result)
@@ -114,6 +118,9 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"f"},"params":[{"type":"Identifier","name":"a"},{"type":"Identifier","name":"b"},{"type":"Identifier","name":"c"},{"type":"Identifier","name":"d"}],"defaults":[],"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Identifier","name":"b"}},"consequent":{"type":"ReturnStatement","argument":None},"alternate":None},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"*","left":{"type":"Identifier","name":"c"},"right":{"type":"Identifier","name":"d"}}}]},"rest":None,"generator":False,"expression":False}]})
         self.assertEqual("function f(a, b, c, d) {\nif (a < b) return;\nreturn c * d;\n}", result)
 
+    def test_continue_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"WhileStatement","test":{"type":"Literal","value":True,"raw":"true"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"a"},"prefix":False}},{"type":"IfStatement","test":{"type":"BinaryExpression","operator":">","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}},"consequent":{"type":"ContinueStatement","label":None},"alternate":None}]}}]})
+        self.assertEqual("while (true) {\na++;\nif (a > 5) continue;\n}", result)
 
 if __name__ == '__main__':
     unittest.main()
