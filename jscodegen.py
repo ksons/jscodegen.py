@@ -256,6 +256,11 @@ class CodeGenerator:
     def throwstatement(self, stmt):
         return "throw %s;" % self.generate_expression(stmt['argument'], Precedence.Sequence)
 
+    def withstatement(self, stmt):
+        result = "with" + self.space + "(%s)" % self.generate_expression(stmt['object'], Precedence.Sequence)
+        result += self.generate_statement(stmt['body'])
+        return result
+
     def identifier(self, expr, precedence):
         return self.generate_identifier(expr)
 

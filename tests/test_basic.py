@@ -169,5 +169,9 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ThrowStatement","argument":{"type":"NewExpression","callee":{"type":"Identifier","name":"Error"},"arguments":[{"type":"Literal","value":"failure","raw":"\"failure\""}]}}]})
         self.assertEqual("throw new Error('failure');", result)
 
+    def test_with_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"WithStatement","object":{"type":"Identifier","name":"Math"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"a"},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"BinaryExpression","operator":"*","left":{"type":"Identifier","name":"PI"},"right":{"type":"Identifier","name":"r"}},"right":{"type":"Identifier","name":"r"}}}}]}}]})
+        self.assertEqual("with (Math){\na = PI * r * r;\n}", result)
+
 if __name__ == '__main__':
     unittest.main()
