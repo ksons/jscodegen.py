@@ -140,6 +140,13 @@ class CodeGenerator:
         else:
             return "break;"
 
+    def returnstatement(self, stmt):
+        if not stmt['argument']:
+            return "return;"
+
+        return "return %s;" % self.generate_expression(stmt['argument'], Precedence.Sequence)
+
+
     def ifstatement(self, stmt):
         result = "if" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
         result += self.generate_statement(stmt['consequent'])
@@ -192,6 +199,9 @@ class CodeGenerator:
             return "null"
         return str(value)
 
+    def functiondeclaration(self, stmt):
+        return "function %s%s" % (self.generate_identifier(stmt['id']), self.generate_function_body(stmt))
+
     def variabledeclaration(self, stmt):
         kind = stmt["kind"]
         declarations = []
@@ -211,8 +221,6 @@ class CodeGenerator:
             result.append(self.generate_identifier(expr['id']))
 
         result.append(self.generate_function_body(expr))
-        result.append(self.space)
-        result.append(self.generate_statement(expr["body"]))
         return "".join(result)
 
     def blockstatement(self, stmt):
@@ -239,8 +247,8 @@ class CodeGenerator:
         return '(' + ", ".join(params) + ')'
 
     def generate_function_body(self, node):
-        result = self.generate_function_params(node)
-        return result
+        result = [self.generate_function_params(node), self.space, self.generate_statement(node["body"])]
+        return "".join(result)
 
     def generate_expression(self, expr, precedence):
         node_type = expr["type"]
