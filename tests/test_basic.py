@@ -150,5 +150,20 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"TryStatement","block":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"a"},"right":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"b"},"property":{"type":"Identifier","name":"prop"}}}}]},"guardedHandlers":[],"handlers":[{"type":"CatchClause","param":{"type":"Identifier","name":"e"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"Identifier","name":"doSomething"},"arguments":[]}}]}}],"finalizer":None}]})
         self.assertEqual("try {\na = b.prop;\n} catch (e){\ndoSomething();\n}", result)
 
+    def test_debugger_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"DebuggerStatement"}]})
+        self.assertEqual("debugger;", result)
+
+    def test_labeled_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"LabeledStatement","label":{"type":"Identifier","name":"loop1"},"body":{"type":"ForStatement","init":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"i"},"right":{"type":"Literal","value":0,"raw":"0"}},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"i"},"right":{"type":"Literal","value":3,"raw":"3"}},"update":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i"},"prefix":False},"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"LogicalExpression","operator":"&&","left":{"type":"BinaryExpression","operator":"==","left":{"type":"Identifier","name":"i"},"right":{"type":"Literal","value":1,"raw":"1"}},"right":{"type":"BinaryExpression","operator":"==","left":{"type":"Identifier","name":"j"},"right":{"type":"Literal","value":1,"raw":"1"}}},"consequent":{"type":"BlockStatement","body":[{"type":"ContinueStatement","label":{"type":"Identifier","name":"loop1"}}]},"alternate":None}]}}}]})
+        self.assertEqual("loop1: for (i = 0; i < 3; i++) {\nif (i == 1 && j == 1) {\ncontinue loop1;\n}\n}", result)
+
+    def test_object_expression(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"ObjectExpression","properties":[]}}],"kind":"var"}]})
+        self.assertEqual("var a = {};", result)
+
+        result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"ObjectExpression","properties":[{"type":"Property","key":{"type":"Identifier","name":"a"},"value":{"type":"Literal","value":42,"raw":"42"},"kind":"init"},{"type":"Property","key":{"type":"Literal","value":"b","raw":"\"b\""},"value":{"type":"Literal","value":"string","raw":"\"string\""},"kind":"init"},{"type":"Property","key":{"type":"Identifier","name":"f"},"value":{"type":"FunctionExpression","id":None,"params":[{"type":"Identifier","name":"e"}],"defaults":[],"body":{"type":"BlockStatement","body":[{"type":"ReturnStatement","argument":{"type":"Identifier","name":"e"}}]},"rest":None,"generator":False,"expression":False},"kind":"init"}]}}],"kind":"var"}]})
+        self.assertEqual("var a = {\na: 42,\n'b': 'string',\nf: function(e) {\nreturn e;\n}\n};", result)
+
 if __name__ == '__main__':
     unittest.main()

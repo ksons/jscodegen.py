@@ -186,7 +186,7 @@ class CodeGenerator:
 
     def continuestatement(self, stmt):
         if stmt['label']:
-            return "continue %s;" % stmt['label'].name
+            return "continue %s;" % stmt['label']['name']
         return "continue;"
 
     def breakstatement(self, stmt):
@@ -221,6 +221,18 @@ class CodeGenerator:
             return "[]"
         elements = [self.generate_expression(e, Precedence.Assignment) for e in elements]
         return "[%s]" % (","+self.space).join(elements)
+
+    def property(self, expr, precedence):
+        result = self.generate_property_key(expr['key'], False) + ":" + self.space
+        result += self.generate_expression(expr['value'], Precedence.Sequence)
+        return result
+
+    def objectexpression(self, expr, precedence):
+        properties = expr['properties']
+        if not len(properties):
+            return "{}"
+        fragments = [self.generate_expression(p, Precedence.Sequence) for p in properties]
+        return "{\n%s\n}" % ",\n".join(fragments)
 
     def memberexpression(self, expr, precedence):
         result = [self.generate_expression(expr['object'], Precedence.Call) ]
@@ -297,6 +309,12 @@ class CodeGenerator:
         result += self.generate_statement(stmt['body'])
         return result
 
+    def labeledstatement(self, stmt):
+        return "%s: %s" % (stmt['label']['name'], self.generate_statement(stmt['body']))
+
+    def debuggerstatement(self, stmt):
+        return "debugger;"
+
     def parenthesize(self, text, current, should):
         if current < should:
             return '(' + text + ')'
@@ -305,6 +323,10 @@ class CodeGenerator:
     def is_statement(self, node):
         return Syntax(node["type"]) in Statements
 
+    def generate_property_key(self, expr, computed):
+        if computed:
+            return "[%s]" % self.generate_expression(expr, Precedence.Sequence)
+        return self.generate_expression(expr, Precedence.Sequence)
 
     def generate_function_params(self, node):
         params = []
