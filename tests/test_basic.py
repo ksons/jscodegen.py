@@ -65,6 +65,26 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"ConditionalExpression","test":{"type":"Identifier","name":"a"},"consequent":{"type":"BinaryExpression","operator":"-","left":{"type":"Identifier","name":"a"},"right":{"type":"Identifier","name":"b"}},"alternate":{"type":"Identifier","name":"c"}}}]})
         self.assertEqual("a ? a - b : c;", result)
 
+    def test_if_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Identifier","name":"b"}},"consequent":{"type":"BlockStatement","body":[]},"alternate":None}]})
+        self.assertEqual("if (a < b) {\n}", result)
+
+        result = jscodegen.generate({"type":"Program","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Identifier","name":"b"}},"consequent":{"type":"BlockStatement","body":[]},"alternate":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"--","argument":{"type":"Identifier","name":"a"},"prefix":False}}]}}]})
+        self.assertEqual("if (a < b) {\n} else {\na--;\n}", result)
+
+    def test_while_statement(self):
+        result = jscodegen.generate({"type":"Program","body":[{"type":"WhileStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}},"body":{"type":"BlockStatement","body":[]}}]})
+        self.assertEqual("while (a < 5) {\n}", result)
+
+    def test_array_expression(self):
+        # no elements
+        result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c"},"init":{"type":"ArrayExpression","elements":[]}}],"kind":"var"}]})
+        self.assertEqual("var c = [];", result)
+
+        #with elements
+        result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c"},"init":{"type":"ArrayExpression","elements":[{"type":"Literal","value":1,"raw":"1"},{"type":"Literal","value":2,"raw":"2"},{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":3,"raw":"3"},"right":{"type":"Literal","value":4,"raw":"4"}}]}}],"kind":"var"}]})
+        self.assertEqual("var c = [1, 2, 3 + 4];", result)
+
 
 if __name__ == '__main__':
     unittest.main()

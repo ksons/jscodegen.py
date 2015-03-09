@@ -100,10 +100,12 @@ class CodeGenerator:
         current_precedence = BinaryPrecedence[operator]
         result = [
             self.generate_expression(expr['left'], current_precedence),
+            self.space,
             operator,
+            self.space,
             self.generate_expression(expr['right'], current_precedence)
         ]
-        return self.parenthesize(" ".join(result), current_precedence, precedence)
+        return self.parenthesize("".join(result), current_precedence, precedence)
 
     def unaryexpression(self, expr, precedence):
         operator = expr['operator']
@@ -131,6 +133,32 @@ class CodeGenerator:
         result += self.space + ':' + self.space
         result += self.generate_expression(expr['alternate'], Precedence.Assignment)
         return result
+
+    def breakstatement(self, stmt):
+        if stmt['label']:
+            return "break %s;" % stmt['label']
+        else:
+            return "break;"
+
+    def ifstatement(self, stmt):
+        result = "if" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
+        result += self.generate_statement(stmt['consequent'])
+        if stmt['alternate']:
+            result += self.space + "else" + self.space
+            result += self.generate_statement(stmt['alternate'])
+        return result
+
+    def whilestatement(self, stmt):
+        result = "while" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
+        result += self.generate_statement(stmt['body'])
+        return result
+
+    def arrayexpression(self, expr, precedence):
+        elements = expr['elements']
+        if not len(elements):
+            return "[]"
+        elements = [self.generate_expression(e, Precedence.Assignment) for e in elements]
+        return "[%s]" % (","+self.space).join(elements)
 
     def memberexpression(self, expr, precedence):
         result = [self.generate_expression(expr['object'], Precedence.Call) ]
