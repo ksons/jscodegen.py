@@ -58,10 +58,10 @@ BinaryPrecedence = {
 
 class CodeGenerator:
     space = " "
+    indent = 2
 
     def __init__(self, options):
-        pass
-
+        self.indentation = 0
 
     def program(self, stmt):
         result = []
@@ -112,8 +112,10 @@ class CodeGenerator:
 
         result =  "switch" + self.space + "(%s)" % self.generate_expression(stmt['discriminant'], Precedence.Sequence)
         result += self.space + "{\n"
+        self.indentation += self.indent
         for case in cases:
             fragments.append(self.generate_statement(case))
+        self.indentation -= self.indent
 
         return result + "".join(fragments) + "}"
 
@@ -232,7 +234,14 @@ class CodeGenerator:
         if not len(properties):
             return "{}"
         fragments = [self.generate_expression(p, Precedence.Sequence) for p in properties]
-        return "{\n%s\n}" % ",\n".join(fragments)
+        result = ["{"]
+        self.indentation += self.indent
+        for i, fragment in enumerate(fragments):
+            fragments[i] = '{}{}'.format(self.indentation * self.space, fragment)
+        result.append("%s" % ",\n".join(fragments))
+        self.indentation -= self.indent
+        result.append('%s}' % (self.indentation * self.space))
+        return '\n'.join(result)
 
     def memberexpression(self, expr, precedence):
         result = [self.generate_expression(expr['object'], Precedence.Call) ]
@@ -292,7 +301,7 @@ class CodeGenerator:
 
     def functionexpression(self, expr, precedence):
         result = ['function']
-        if expr['id']:
+        if 'id' in expr and expr['id']:
             result.append(self.generate_identifier(expr['id']))
 
         result.append(self.generate_function_body(expr))
@@ -301,8 +310,10 @@ class CodeGenerator:
     def blockstatement(self, stmt):
         result = ["{"]
         body = stmt['body']
+        self.indentation += self.indent
         for bstmt in body:
-            result.append(self.generate_statement(bstmt))
+            result.append('{}{}'.format(self.indentation * self.space, self.generate_statement(bstmt)))
+        self.indentation -= self.indent
         result.append("}")
         return "\n".join(result)
 
