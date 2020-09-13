@@ -80,7 +80,7 @@ class BaseTestCase(unittest.TestCase):
 
     def test_for_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ForStatement","init":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"i"},"right":{"type":"Literal","value":0,"raw":"0"}},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"i"},"right":{"type":"Literal","value":10,"raw":"10"}},"update":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i"},"prefix":False},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"Identifier","name":"print"},"arguments":[{"type":"Literal","value":"Hallo","raw":"\"Hallo\""}]}}]}}]})
-        self.assertEqual("for (i = 0; i < 10; i++) {\nprint('Hallo');\n}", result)
+        self.assertEqual("for (i = 0; i < 10; i++) {\n  print('Hallo');\n}", result)
 
     def test_conditional_expression(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"ConditionalExpression","test":{"type":"Identifier","name":"a"},"consequent":{"type":"BinaryExpression","operator":"-","left":{"type":"Identifier","name":"a"},"right":{"type":"Identifier","name":"b"}},"alternate":{"type":"Identifier","name":"c"}}}]})
@@ -91,7 +91,7 @@ class BaseTestCase(unittest.TestCase):
         self.assertEqual("if (a < b) {\n}", result)
 
         result = jscodegen.generate({"type":"Program","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Identifier","name":"b"}},"consequent":{"type":"BlockStatement","body":[]},"alternate":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"--","argument":{"type":"Identifier","name":"a"},"prefix":False}}]}}]})
-        self.assertEqual("if (a < b) {\n} else {\na--;\n}", result)
+        self.assertEqual("if (a < b) {\n} else {\n  a--;\n}", result)
 
     def test_while_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"WhileStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}},"body":{"type":"BlockStatement","body":[]}}]})
@@ -108,7 +108,7 @@ class BaseTestCase(unittest.TestCase):
 
     def test_break_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"WhileStatement","test":{"type":"Literal","value":True,"raw":"true"},"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}},"consequent":{"type":"BlockStatement","body":[{"type":"BreakStatement","label":None}]},"alternate":None}]}}]})
-        self.assertEqual("while (true) {\nif (a < 5) {\nbreak;\n}\n}", result)
+        self.assertEqual("while (true) {\n  if (a < 5) {\n    break;\n}\n}", result)
 
     def test_function_declaration(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"f"},"params":[],"defaults":[],"body":{"type":"BlockStatement","body":[]},"rest":None,"generator":False,"expression":False}]})
@@ -119,16 +119,16 @@ class BaseTestCase(unittest.TestCase):
 
     def test_return_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"f"},"params":[{"type":"Identifier","name":"a"},{"type":"Identifier","name":"b"},{"type":"Identifier","name":"c"},{"type":"Identifier","name":"d"}],"defaults":[],"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Identifier","name":"b"}},"consequent":{"type":"ReturnStatement","argument":None},"alternate":None},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"*","left":{"type":"Identifier","name":"c"},"right":{"type":"Identifier","name":"d"}}}]},"rest":None,"generator":False,"expression":False}]})
-        self.assertEqual("function f(a, b, c, d) {\nif (a < b) return;\nreturn c * d;\n}", result)
+        self.assertEqual("function f(a, b, c, d) {\n  if (a < b) return;\n  return c * d;\n}", result)
 
     def test_continue_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"WhileStatement","test":{"type":"Literal","value":True,"raw":"true"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"a"},"prefix":False}},{"type":"IfStatement","test":{"type":"BinaryExpression","operator":">","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}},"consequent":{"type":"ContinueStatement","label":None},"alternate":None}]}}]})
-        self.assertEqual("while (true) {\na++;\nif (a > 5) continue;\n}", result)
+        self.assertEqual("while (true) {\n  a++;\n  if (a > 5) continue;\n}", result)
 
     def test_for_in_statement(self):
         # with declaration
         result = jscodegen.generate({"type":"Program","body":[{"type":"ForInStatement","left":{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"prop"},"init":None}],"kind":"var"},"right":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"MemberExpression","computed":True,"object":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"property":{"type":"Identifier","name":"prop"}}]}}]},"each":False}]})
-        self.assertEqual("for (var prop in document.body) {\nconsole.log(document.body[prop]);\n}", result)
+        self.assertEqual("for (var prop in document.body) {\n  console.log(document.body[prop]);\n}", result)
 
         # w/o declaration
         result = jscodegen.generate({"type":"Program","body":[{"type":"ForInStatement","left":{"type":"Identifier","name":"prop"},"right":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"MemberExpression","computed":True,"object":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"property":{"type":"Identifier","name":"prop"}}]}}]},"each":False}]})
@@ -136,7 +136,7 @@ class BaseTestCase(unittest.TestCase):
 
     def test_do_while(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"DoWhileStatement","body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"a"},"prefix":True}}]},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}}}]})
-        self.assertEqual("do {\n++a;\n}(a < 5);", result)
+        self.assertEqual("do {\n  ++a;\n}(a < 5);", result)
 
     def test_switch_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"SwitchStatement","discriminant":{"type":"Identifier","name":"a"},"cases":[{"type":"SwitchCase","test":{"type":"Literal","value":"a","raw":"\"a\""},"consequent":[{"type":"BreakStatement","label":None}]},{"type":"SwitchCase","test":{"type":"Literal","value":42,"raw":"42"},"consequent":[]},{"type":"SwitchCase","test":{"type":"Literal","value":43,"raw":"43"},"consequent":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"Identifier","name":"a"}]}},{"type":"BreakStatement","label":None}]},{"type":"SwitchCase","test":None,"consequent":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"Literal","value":"not found","raw":"\"not found\""}]}}]}]}]})
@@ -148,7 +148,7 @@ class BaseTestCase(unittest.TestCase):
 
     def test_try_catch_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"TryStatement","block":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"a"},"right":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"b"},"property":{"type":"Identifier","name":"prop"}}}}]},"guardedHandlers":[],"handlers":[{"type":"CatchClause","param":{"type":"Identifier","name":"e"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"Identifier","name":"doSomething"},"arguments":[]}}]}}],"finalizer":None}]})
-        self.assertEqual("try {\na = b.prop;\n} catch (e){\ndoSomething();\n}", result)
+        self.assertEqual("try {\n  a = b.prop;\n} catch (e){\n  doSomething();\n}", result)
 
     def test_debugger_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"DebuggerStatement"}]})
@@ -156,14 +156,14 @@ class BaseTestCase(unittest.TestCase):
 
     def test_labeled_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"LabeledStatement","label":{"type":"Identifier","name":"loop1"},"body":{"type":"ForStatement","init":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"i"},"right":{"type":"Literal","value":0,"raw":"0"}},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"i"},"right":{"type":"Literal","value":3,"raw":"3"}},"update":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i"},"prefix":False},"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"LogicalExpression","operator":"&&","left":{"type":"BinaryExpression","operator":"==","left":{"type":"Identifier","name":"i"},"right":{"type":"Literal","value":1,"raw":"1"}},"right":{"type":"BinaryExpression","operator":"==","left":{"type":"Identifier","name":"j"},"right":{"type":"Literal","value":1,"raw":"1"}}},"consequent":{"type":"BlockStatement","body":[{"type":"ContinueStatement","label":{"type":"Identifier","name":"loop1"}}]},"alternate":None}]}}}]})
-        self.assertEqual("loop1: for (i = 0; i < 3; i++) {\nif (i == 1 && j == 1) {\ncontinue loop1;\n}\n}", result)
+        self.assertEqual("loop1: for (i = 0; i < 3; i++) {\n  if (i == 1 && j == 1) {\n    continue loop1;\n}\n}", result)
 
     def test_object_expression(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"ObjectExpression","properties":[]}}],"kind":"var"}]})
         self.assertEqual("var a = {};", result)
 
         result = jscodegen.generate({"type":"Program","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a"},"init":{"type":"ObjectExpression","properties":[{"type":"Property","key":{"type":"Identifier","name":"a"},"value":{"type":"Literal","value":42,"raw":"42"},"kind":"init"},{"type":"Property","key":{"type":"Literal","value":"b","raw":"\"b\""},"value":{"type":"Literal","value":"string","raw":"\"string\""},"kind":"init"},{"type":"Property","key":{"type":"Identifier","name":"f"},"value":{"type":"FunctionExpression","id":None,"params":[{"type":"Identifier","name":"e"}],"defaults":[],"body":{"type":"BlockStatement","body":[{"type":"ReturnStatement","argument":{"type":"Identifier","name":"e"}}]},"rest":None,"generator":False,"expression":False},"kind":"init"}]}}],"kind":"var"}]})
-        self.assertEqual("var a = {\na: 42,\n'b': 'string',\nf: function(e) {\nreturn e;\n}\n};", result)
+        self.assertEqual("var a = {\n  a: 42,\n  'b': 'string',\n  f: function(e) {\n  return e;\n}\n};", result)
 
     def test_throw_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"ThrowStatement","argument":{"type":"NewExpression","callee":{"type":"Identifier","name":"Error"},"arguments":[{"type":"Literal","value":"failure","raw":"\"failure\""}]}}]})
@@ -171,7 +171,7 @@ class BaseTestCase(unittest.TestCase):
 
     def test_with_statement(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"WithStatement","object":{"type":"Identifier","name":"Math"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"a"},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"BinaryExpression","operator":"*","left":{"type":"Identifier","name":"PI"},"right":{"type":"Identifier","name":"r"}},"right":{"type":"Identifier","name":"r"}}}}]}}]})
-        self.assertEqual("with (Math){\na = PI * r * r;\n}", result)
+        self.assertEqual("with (Math){\n  a = PI * r * r;\n}", result)
 
 if __name__ == '__main__':
     unittest.main()
