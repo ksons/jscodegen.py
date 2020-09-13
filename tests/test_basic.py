@@ -132,7 +132,7 @@ class BaseTestCase(unittest.TestCase):
 
         # w/o declaration
         result = jscodegen.generate({"type":"Program","body":[{"type":"ForInStatement","left":{"type":"Identifier","name":"prop"},"right":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"console"},"property":{"type":"Identifier","name":"log"}},"arguments":[{"type":"MemberExpression","computed":True,"object":{"type":"MemberExpression","computed":False,"object":{"type":"Identifier","name":"document"},"property":{"type":"Identifier","name":"body"}},"property":{"type":"Identifier","name":"prop"}}]}}]},"each":False}]})
-        self.assertEqual("for (prop in document.body) {\nconsole.log(document.body[prop]);\n}", result)
+        self.assertEqual("for (prop in document.body) {\n  console.log(document.body[prop]);\n}", result)
 
     def test_do_while(self):
         result = jscodegen.generate({"type":"Program","body":[{"type":"DoWhileStatement","body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"a"},"prefix":True}}]},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"a"},"right":{"type":"Literal","value":5,"raw":"5"}}}]})
