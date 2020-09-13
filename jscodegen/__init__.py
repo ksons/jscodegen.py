@@ -259,6 +259,8 @@ class CodeGenerator:
             args.append(self.generate_expression(arg, Precedence.Assignment))
 
         result.append(", ".join(args))
+        if result and result[-1] and result[-1][-1] == '\n':
+                result[-1] = result[-1][:-1]
         result.append(')')
         return "".join(result)
 
@@ -314,8 +316,11 @@ class CodeGenerator:
         for bstmt in body:
             result.append('{}{}'.format(self.indentation * self.space, self.generate_statement(bstmt)))
         self.indentation -= self.indent
-        result.append("}")
-        return "\n".join(result)
+        result.append("%s}" % (self.indentation * self.space))
+        result = "\n".join(result)
+        if self.indentation == 0:
+            result += "\n"
+        return result
 
     def trystatement(self, stmt):
         result = "try" + self.space
