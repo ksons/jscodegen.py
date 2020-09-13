@@ -1,5 +1,5 @@
 from enum import IntEnum
-from syntax import Syntax, Statements
+from jscodegen.syntax import Syntax, Statements
 
 class Precedence(IntEnum):
     Sequence = 0

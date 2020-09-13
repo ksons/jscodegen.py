@@ -55,3 +55,4 @@ target/
 
 # IDEA IDEs
 .idea
+.vscode
