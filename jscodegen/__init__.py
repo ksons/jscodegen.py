@@ -71,7 +71,7 @@ class CodeGenerator:
 
     def expressionstatement(self, stmt):
         result = self.generate_expression(stmt['expression'], Precedence.Sequence)
-        return result + ";"
+        return result + ";\n"
 
     def forstatement(self, stmt):
         result = "for ("
@@ -250,7 +250,7 @@ class CodeGenerator:
         else:
             result += [".", self.generate_expression(expr['property'], Precedence.Sequence)]
 
-        return self.parenthesize("".join(result), Precedence.Member, precedence);
+        return self.parenthesize("".join(result), Precedence.Member, precedence)
 
     def callexpression(self, expr, precedence):
         result = [self.generate_expression(expr['callee'], Precedence.Call), '(' ]
@@ -293,7 +293,7 @@ class CodeGenerator:
         declarations = []
         for declaration in stmt['declarations']:
             declarations.append(self.generate_statement(declaration))
-        return kind + " " + ", ".join(declarations) + ";"
+        return kind + " " + ", ".join(declarations) + ";\n"
 
     def variabledeclarator(self, stmt):
         result = self.generate_expression(stmt['id'], Precedence.Assignment)
@@ -310,14 +310,16 @@ class CodeGenerator:
         return "".join(result)
 
     def blockstatement(self, stmt):
-        result = ["{"]
+        result = ["{\n"]
         body = stmt['body']
         self.indentation += self.indent
         for bstmt in body:
             result.append('{}{}'.format(self.indentation * self.space, self.generate_statement(bstmt)))
         self.indentation -= self.indent
-        result.append("%s}" % (self.indentation * self.space))
-        result = "\n".join(result)
+        if result and result[-1] and result[-1][-1] == '\n':
+            result[-1] = result[-1][:-1]
+        result.append("\n%s}" % (self.indentation * self.space))
+        result = "".join(result)
         if self.indentation == 0:
             result += "\n"
         return result
