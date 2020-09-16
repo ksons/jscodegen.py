@@ -58,10 +58,10 @@ BinaryPrecedence = {
 
 class CodeGenerator:
     space = " "
-    indent = 2
 
-    def __init__(self, options):
+    def __init__(self, indent):
         self.indentation = 0
+        self.indent = indent
 
     def program(self, stmt):
         result = []
@@ -399,6 +399,6 @@ class CodeGenerator:
         pass
 
 
-def generate(node, options=None):
-    g = CodeGenerator(options)
+def generate(node, indent=2):
+    g = CodeGenerator(indent)
     return g.generate(node)
