@@ -207,9 +207,10 @@ class CodeGenerator:
     def ifstatement(self, stmt):
         result = "if" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
         result += self.generate_statement(stmt['consequent'])
-        if stmt['alternate']:
+        if 'alternate' in stmt and stmt['alternate']:
             result += self.space + "else" + self.space
             result += self.generate_statement(stmt['alternate'])
+        result += '\n'
         return result
 
     def whilestatement(self, stmt):
@@ -309,6 +310,14 @@ class CodeGenerator:
         result.append(self.generate_function_body(expr))
         return "".join(result)
 
+    def arrowfunctionexpression(self, expr, precedence):
+        result = []
+        if 'id' in expr and expr['id']:
+            result.append(self.generate_identifier(expr['id']))
+
+        result.append(self.generate_arrow_function_body(expr))
+        return "".join(result)
+
     def blockstatement(self, stmt):
         result = ["{\n"]
         body = stmt['body']
@@ -362,6 +371,10 @@ class CodeGenerator:
 
     def generate_function_body(self, node):
         result = [self.generate_function_params(node), self.space, self.generate_statement(node["body"])]
+        return "".join(result)
+
+    def generate_arrow_function_body(self, node):
+        result = [self.generate_function_params(node), self.space, '=>', self.space, self.generate_statement(node["body"])]
         return "".join(result)
 
     def generate_expression(self, expr, precedence):
