@@ -277,6 +277,8 @@ class CodeGenerator:
         return self.generate_identifier(expr)
 
     def literal(self, expr, precedence):
+        if 'regex' in expr:
+            return '/{}/{}'.format(expr['regex']['pattern'], expr['regex']['flags'])
         value = expr['value']
         if isinstance(value, str):
             return "'%s'" % value
