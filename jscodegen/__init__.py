@@ -1,3 +1,4 @@
+import json
 from enum import IntEnum
 from jscodegen.syntax import Syntax, Statements
 
@@ -281,7 +282,7 @@ class CodeGenerator:
             return '/{}/{}'.format(expr['regex']['pattern'], expr['regex']['flags'])
         value = expr['value']
         if isinstance(value, str):
-            return "'%s'" % value
+            return "%s" % json.dumps(value)
         if isinstance(value, bool):
             return "true" if value else "false"
         if value == None:
