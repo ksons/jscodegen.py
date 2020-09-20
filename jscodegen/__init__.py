@@ -280,6 +280,8 @@ class CodeGenerator:
     def literal(self, expr, precedence):
         if 'regex' in expr:
             return '/{}/{}'.format(expr['regex']['pattern'], expr['regex']['flags'])
+        if 'value' not in expr:
+            expr['value'] = None
         value = expr['value']
         if isinstance(value, str):
             return "%s" % json.dumps(value)
