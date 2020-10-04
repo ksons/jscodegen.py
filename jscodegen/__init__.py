@@ -250,7 +250,10 @@ class CodeGenerator:
         if expr['computed']:
             result += ["[", self.generate_expression(expr['property'], Precedence.Sequence), "]"]
         else:
-            result += [".", self.generate_expression(expr['property'], Precedence.Sequence)]
+            result += [
+                "{}.".format('\n{}'.format(self.indentation * self.space) if expr['property']['name'] == 'then' else ''),
+                self.generate_expression(expr['property'], Precedence.Sequence)
+            ]
 
         return self.parenthesize("".join(result), Precedence.Member, precedence)
 
