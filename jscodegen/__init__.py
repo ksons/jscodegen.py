@@ -389,6 +389,8 @@ class CodeGenerator:
 
     def generate_statement(self, stmt):
         node_type = stmt["type"]
+        if node_type.lower().endswith('expression'):
+            return self.generate_expression(stmt, Precedence.Sequence)
         attr = getattr(self, node_type.lower())
         # print(attr)
         return attr(stmt)
