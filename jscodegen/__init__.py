@@ -235,9 +235,9 @@ class CodeGenerator:
         properties = expr['properties']
         if not len(properties):
             return "{}"
-        fragments = [self.generate_expression(p, Precedence.Sequence) for p in properties]
         result = ["{"]
         self.indentation += self.indent
+        fragments = [self.generate_expression(p, Precedence.Sequence) for p in properties]
         for i, fragment in enumerate(fragments):
             fragments[i] = '{}{}'.format(self.indentation * self.space, fragment)
         result.append("%s" % ",\n".join(fragments))
