@@ -226,10 +226,20 @@ class CodeGenerator:
         elements = [self.generate_expression(e, Precedence.Assignment) for e in elements]
         return "[%s]" % (","+self.space).join(elements)
 
+    def objectpattern(self, expr, precedence):
+        properties = expr['properties']
+        if not len(properties):
+            return "{}"
+        properties = [self.generate_expression(e, Precedence.Assignment) for e in properties]
+        return "{%s}" % (","+self.space).join(properties)
+
     def property(self, expr, precedence):
-        result = self.generate_property_key(expr['key'], False) + ":" + self.space
-        result += self.generate_expression(expr['value'], Precedence.Sequence)
-        return result
+        key = self.generate_property_key(expr['key'], False) + ":" + self.space
+        value = self.generate_expression(expr['value'], Precedence.Sequence)
+        if expr['key']['type'] == expr['value']['type'] == 'Identifier' and expr['key']['name'] == expr['value']['name']:
+            return value
+        else:
+            return key + value
 
     def objectexpression(self, expr, precedence):
         properties = expr['properties']
