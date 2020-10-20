@@ -211,7 +211,6 @@ class CodeGenerator:
         if 'alternate' in stmt and stmt['alternate']:
             result += self.space + "else" + self.space
             result += self.generate_statement(stmt['alternate'])
-        result += '\n'
         return result
 
     def whilestatement(self, stmt):
@@ -240,6 +239,9 @@ class CodeGenerator:
             return value
         else:
             return key + value
+
+    def spreadelement(self, expr, precedence):
+        return "...%s" % self.generate_expression(expr['argument'], Precedence.Assignment)
 
     def objectexpression(self, expr, precedence):
         properties = expr['properties']
