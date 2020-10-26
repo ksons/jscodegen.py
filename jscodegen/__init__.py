@@ -104,7 +104,8 @@ class CodeGenerator:
 
     def dowhilestatement(self, stmt):
         result = "do" + self.space + self.generate_statement(stmt['body'])
-        result += "(%s);" % self.generate_expression(stmt['test'], Precedence.Sequence)
+        result = result[:-1]
+        result += " while (%s);" % self.generate_expression(stmt['test'], Precedence.Sequence)
         return result
 
     def switchstatement(self, stmt):
@@ -121,13 +122,17 @@ class CodeGenerator:
         return result + "".join(fragments) + "}"
 
     def switchcase(self, stmt):
+        result = self.indentation * self.space
         if stmt['test']:
-            result = "case %s:\n" % self.generate_expression(stmt['test'], Precedence.Sequence)
+            result += "case %s:\n" % self.generate_expression(stmt['test'], Precedence.Sequence)
         else:
-            result = "default:\n"
+            result += "default:\n"
 
+        self.indentation += self.indent
         for consequent in stmt['consequent']:
+            result += self.indentation * self.space
             result += self.generate_statement(consequent) + "\n"
+        self.indentation -= self.indent
         return result
 
     def assignmentexpression(self, expr, precedence):
@@ -200,15 +205,16 @@ class CodeGenerator:
 
     def returnstatement(self, stmt):
         if not stmt['argument']:
-            return "return;"
+            return "return;\n"
 
-        return "return %s;" % self.generate_expression(stmt['argument'], Precedence.Sequence)
+        return "return %s;\n" % self.generate_expression(stmt['argument'], Precedence.Sequence)
 
 
     def ifstatement(self, stmt):
         result = "if" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
         result += self.generate_statement(stmt['consequent'])
         if 'alternate' in stmt and stmt['alternate']:
+            result = result[:-1]
             result += self.space + "else" + self.space
             result += self.generate_statement(stmt['alternate'])
         return result
@@ -282,7 +288,7 @@ class CodeGenerator:
         return "".join(result)
 
     def throwstatement(self, stmt):
-        return "throw %s;" % self.generate_expression(stmt['argument'], Precedence.Sequence)
+        return "throw %s;\n" % self.generate_expression(stmt['argument'], Precedence.Sequence)
 
     def withstatement(self, stmt):
         result = "with" + self.space + "(%s)" % self.generate_expression(stmt['object'], Precedence.Sequence)
@@ -314,7 +320,10 @@ class CodeGenerator:
         declarations = []
         for declaration in stmt['declarations']:
             declarations.append(self.generate_statement(declaration))
-        return kind + " " + ", ".join(declarations) + ";\n"
+        result = kind + " " + ", ".join(declarations)
+        if result[-1] == '\n':
+            result = result[:-1]
+        return result + ";\n"
 
     def variabledeclarator(self, stmt):
         result = self.generate_expression(stmt['id'], Precedence.Assignment)
@@ -356,6 +365,7 @@ class CodeGenerator:
     def trystatement(self, stmt):
         result = "try" + self.space
         result += self.generate_statement(stmt['block'])
+        result = result[:-1]
         result += "\n".join([self.generate_statement(s) for s in stmt['handlers']])
         return result
 
