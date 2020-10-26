@@ -173,5 +173,17 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type":"Program","body":[{"type":"WithStatement","object":{"type":"Identifier","name":"Math"},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"a"},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"BinaryExpression","operator":"*","left":{"type":"Identifier","name":"PI"},"right":{"type":"Identifier","name":"r"}},"right":{"type":"Identifier","name":"r"}}}}]}}]})
         self.assertEqual("with (Math){\n  a = PI * r * r;\n}\n", result)
 
+    def test_object_pattern(self):
+        result = jscodegen.generate({"type": "Program", "sourceType": "script", "body": [{"type": "VariableDeclaration", "declarations": [{"type": "VariableDeclarator", "id": {"type": "Identifier", "name": "person"}, "init": {"type": "ObjectExpression", "properties": [{"type": "Property", "key": {"type": "Identifier", "name": "firstName"}, "computed": False, "value": {"type": "Literal", "value": "John", "raw": "\"John\""}, "kind": "init", "method": False, "shorthand": False}, {"type": "Property", "key": {"type": "Identifier", "name": "lastName"}, "computed": False, "value": {"type": "Literal", "value": "Doe", "raw": "\"Doe\""}, "kind": "init", "method": False, "shorthand": False}, {"type": "Property", "key": {"type": "Identifier", "name": "age"}, "computed": False, "value": {"type": "Literal", "value": 50, "raw": "50"}, "kind": "init", "method": False, "shorthand": False}, {"type": "Property", "key": {"type": "Identifier", "name": "eyeColor"}, "computed": False, "value": {"type": "Literal", "value": "blue", "raw": "\"blue\""}, "kind": "init", "method": False, "shorthand": False}]}}], "kind": "var"}]})
+        self.assertEqual("var person = {\n  firstName: \"John\",\n  lastName: \"Doe\",\n  age: 50,\n  eyeColor: \"blue\"\n};\n", result)
+
+    def test_spread_element(self):
+        result = jscodegen.generate({"type": "Program", "sourceType": "script", "body": [{"type": "VariableDeclaration", "declarations": [{"type": "VariableDeclarator", "id": {"type": "Identifier", "name": "x"}, "init": {"type": "ObjectExpression", "properties": [{"type": "SpreadElement", "argument": {"type": "Identifier", "name": "numbers"}}]}}], "kind": "var"}]})
+        self.assertEqual("var x = {\n  ...numbers\n};\n", result)
+
+    def test_arrow_function_expression(self):
+        result = jscodegen.generate({"type": "Program", "sourceType": "script", "body": [{"type": "VariableDeclaration", "declarations": [{"type": "VariableDeclarator", "id": {"type": "Identifier", "name": "func"}, "init": {"type": "ArrowFunctionExpression", "generator": False, "async": False, "params": [{"type": "Identifier", "name": "x"}, {"type": "Identifier", "name": "y"}], "body": {"type": "BlockStatement", "body": [{"type": "ReturnStatement", "argument": {"type": "BinaryExpression", "operator": "+", "left": {"type": "Identifier", "name": "x"}, "right": {"type": "Identifier", "name": "y"}}}]}, "expression": False}}], "kind": "var"}]})
+        self.assertEqual("var func = (x, y) => {\n  return x + y;\n};\n", result)
+
 if __name__ == '__main__':
     unittest.main()
