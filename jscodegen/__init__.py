@@ -1,5 +1,6 @@
+import json
 from enum import IntEnum
-from syntax import Syntax, Statements
+from jscodegen.syntax import Syntax, Statements
 
 class Precedence(IntEnum):
     Sequence = 0
@@ -59,9 +60,9 @@ BinaryPrecedence = {
 class CodeGenerator:
     space = " "
 
-    def __init__(self, options):
-        pass
-
+    def __init__(self, indent):
+        self.indentation = 0
+        self.indent = indent
 
     def program(self, stmt):
         result = []
@@ -71,7 +72,7 @@ class CodeGenerator:
 
     def expressionstatement(self, stmt):
         result = self.generate_expression(stmt['expression'], Precedence.Sequence)
-        return result + ";"
+        return result + ";\n"
 
     def forstatement(self, stmt):
         result = "for ("
@@ -103,7 +104,8 @@ class CodeGenerator:
 
     def dowhilestatement(self, stmt):
         result = "do" + self.space + self.generate_statement(stmt['body'])
-        result += "(%s);" % self.generate_expression(stmt['test'], Precedence.Sequence)
+        result = result[:-1]
+        result += " while (%s);" % self.generate_expression(stmt['test'], Precedence.Sequence)
         return result
 
     def switchstatement(self, stmt):
@@ -112,19 +114,25 @@ class CodeGenerator:
 
         result =  "switch" + self.space + "(%s)" % self.generate_expression(stmt['discriminant'], Precedence.Sequence)
         result += self.space + "{\n"
+        self.indentation += self.indent
         for case in cases:
             fragments.append(self.generate_statement(case))
+        self.indentation -= self.indent
 
         return result + "".join(fragments) + "}"
 
     def switchcase(self, stmt):
+        result = self.indentation * self.space
         if stmt['test']:
-            result = "case %s:\n" % self.generate_expression(stmt['test'], Precedence.Sequence)
+            result += "case %s:\n" % self.generate_expression(stmt['test'], Precedence.Sequence)
         else:
-            result = "default:\n"
+            result += "default:\n"
 
+        self.indentation += self.indent
         for consequent in stmt['consequent']:
+            result += self.indentation * self.space
             result += self.generate_statement(consequent) + "\n"
+        self.indentation -= self.indent
         return result
 
     def assignmentexpression(self, expr, precedence):
@@ -197,15 +205,16 @@ class CodeGenerator:
 
     def returnstatement(self, stmt):
         if not stmt['argument']:
-            return "return;"
+            return "return;\n"
 
-        return "return %s;" % self.generate_expression(stmt['argument'], Precedence.Sequence)
+        return "return %s;\n" % self.generate_expression(stmt['argument'], Precedence.Sequence)
 
 
     def ifstatement(self, stmt):
         result = "if" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
         result += self.generate_statement(stmt['consequent'])
-        if stmt['alternate']:
+        if 'alternate' in stmt and stmt['alternate']:
+            result = result[:-1]
             result += self.space + "else" + self.space
             result += self.generate_statement(stmt['alternate'])
         return result
@@ -222,26 +231,49 @@ class CodeGenerator:
         elements = [self.generate_expression(e, Precedence.Assignment) for e in elements]
         return "[%s]" % (","+self.space).join(elements)
 
+    def objectpattern(self, expr, precedence):
+        properties = expr['properties']
+        if not len(properties):
+            return "{}"
+        properties = [self.generate_expression(e, Precedence.Assignment) for e in properties]
+        return "{%s}" % (","+self.space).join(properties)
+
     def property(self, expr, precedence):
-        result = self.generate_property_key(expr['key'], False) + ":" + self.space
-        result += self.generate_expression(expr['value'], Precedence.Sequence)
-        return result
+        key = self.generate_property_key(expr['key'], False) + ":" + self.space
+        value = self.generate_expression(expr['value'], Precedence.Sequence)
+        if expr['key']['type'] == expr['value']['type'] == 'Identifier' and expr['key']['name'] == expr['value']['name']:
+            return value
+        else:
+            return key + value
+
+    def spreadelement(self, expr, precedence):
+        return "...%s" % self.generate_expression(expr['argument'], Precedence.Assignment)
 
     def objectexpression(self, expr, precedence):
         properties = expr['properties']
         if not len(properties):
             return "{}"
+        result = ["{"]
+        self.indentation += self.indent
         fragments = [self.generate_expression(p, Precedence.Sequence) for p in properties]
-        return "{\n%s\n}" % ",\n".join(fragments)
+        for i, fragment in enumerate(fragments):
+            fragments[i] = '{}{}'.format(self.indentation * self.space, fragment)
+        result.append("%s" % ",\n".join(fragments))
+        self.indentation -= self.indent
+        result.append('%s}' % (self.indentation * self.space))
+        return '\n'.join(result)
 
     def memberexpression(self, expr, precedence):
         result = [self.generate_expression(expr['object'], Precedence.Call) ]
         if expr['computed']:
             result += ["[", self.generate_expression(expr['property'], Precedence.Sequence), "]"]
         else:
-            result += [".", self.generate_expression(expr['property'], Precedence.Sequence)]
+            result += [
+                "{}.".format('\n{}'.format(self.indentation * self.space) if expr['property']['name'] == 'then' else ''),
+                self.generate_expression(expr['property'], Precedence.Sequence)
+            ]
 
-        return self.parenthesize("".join(result), Precedence.Member, precedence);
+        return self.parenthesize("".join(result), Precedence.Member, precedence)
 
     def callexpression(self, expr, precedence):
         result = [self.generate_expression(expr['callee'], Precedence.Call), '(' ]
@@ -250,11 +282,13 @@ class CodeGenerator:
             args.append(self.generate_expression(arg, Precedence.Assignment))
 
         result.append(", ".join(args))
+        if result and result[-1] and result[-1][-1] == '\n':
+                result[-1] = result[-1][:-1]
         result.append(')')
         return "".join(result)
 
     def throwstatement(self, stmt):
-        return "throw %s;" % self.generate_expression(stmt['argument'], Precedence.Sequence)
+        return "throw %s;\n" % self.generate_expression(stmt['argument'], Precedence.Sequence)
 
     def withstatement(self, stmt):
         result = "with" + self.space + "(%s)" % self.generate_expression(stmt['object'], Precedence.Sequence)
@@ -265,9 +299,13 @@ class CodeGenerator:
         return self.generate_identifier(expr)
 
     def literal(self, expr, precedence):
+        if 'regex' in expr:
+            return '/{}/{}'.format(expr['regex']['pattern'], expr['regex']['flags'])
+        if 'value' not in expr:
+            expr['value'] = None
         value = expr['value']
         if isinstance(value, str):
-            return "'%s'" % value
+            return "%s" % json.dumps(value)
         if isinstance(value, bool):
             return "true" if value else "false"
         if value == None:
@@ -282,7 +320,10 @@ class CodeGenerator:
         declarations = []
         for declaration in stmt['declarations']:
             declarations.append(self.generate_statement(declaration))
-        return kind + " " + ", ".join(declarations) + ";"
+        result = kind + " " + ", ".join(declarations)
+        if result[-1] == '\n':
+            result = result[:-1]
+        return result + ";\n"
 
     def variabledeclarator(self, stmt):
         result = self.generate_expression(stmt['id'], Precedence.Assignment)
@@ -292,23 +333,39 @@ class CodeGenerator:
 
     def functionexpression(self, expr, precedence):
         result = ['function']
-        if expr['id']:
+        if 'id' in expr and expr['id']:
             result.append(self.generate_identifier(expr['id']))
 
         result.append(self.generate_function_body(expr))
         return "".join(result)
 
+    def arrowfunctionexpression(self, expr, precedence):
+        result = []
+        if 'id' in expr and expr['id']:
+            result.append(self.generate_identifier(expr['id']))
+
+        result.append(self.generate_arrow_function_body(expr))
+        return "".join(result)
+
     def blockstatement(self, stmt):
-        result = ["{"]
+        result = ["{\n"]
         body = stmt['body']
+        self.indentation += self.indent
         for bstmt in body:
-            result.append(self.generate_statement(bstmt))
-        result.append("}")
-        return "\n".join(result)
+            result.append('{}{}'.format(self.indentation * self.space, self.generate_statement(bstmt)))
+        self.indentation -= self.indent
+        if result and result[-1] and result[-1][-1] == '\n':
+            result[-1] = result[-1][:-1]
+        result.append("\n%s}" % (self.indentation * self.space))
+        result = "".join(result)
+        if self.indentation == 0:
+            result += "\n"
+        return result
 
     def trystatement(self, stmt):
         result = "try" + self.space
         result += self.generate_statement(stmt['block'])
+        result = result[:-1]
         result += "\n".join([self.generate_statement(s) for s in stmt['handlers']])
         return result
 
@@ -346,6 +403,10 @@ class CodeGenerator:
         result = [self.generate_function_params(node), self.space, self.generate_statement(node["body"])]
         return "".join(result)
 
+    def generate_arrow_function_body(self, node):
+        result = [self.generate_function_params(node), self.space, '=>', self.space, self.generate_statement(node["body"])]
+        return "".join(result)
+
     def generate_expression(self, expr, precedence):
         node_type = expr["type"]
         attr = getattr(self, node_type.lower())
@@ -353,6 +414,8 @@ class CodeGenerator:
 
     def generate_statement(self, stmt):
         node_type = stmt["type"]
+        if node_type.lower().endswith('expression'):
+            return self.generate_expression(stmt, Precedence.Sequence)
         attr = getattr(self, node_type.lower())
         # print(attr)
         return attr(stmt)
@@ -368,6 +431,6 @@ class CodeGenerator:
         pass
 
 
-def generate(node, options=None):
-    g = CodeGenerator(options)
+def generate(node, indent=2):
+    g = CodeGenerator(indent)
     return g.generate(node)

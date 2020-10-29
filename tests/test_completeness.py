@@ -1,5 +1,5 @@
 import unittest as unittest
-from syntax import Syntax
+from jscodegen.syntax import Syntax
 from jscodegen import CodeGenerator
 
 
