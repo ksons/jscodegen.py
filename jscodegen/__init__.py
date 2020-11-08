@@ -215,7 +215,7 @@ class CodeGenerator:
         result += self.generate_statement(stmt['consequent'])
         if 'alternate' in stmt and stmt['alternate']:
             result = result[:-1]
-            result += self.space + "else" + self.space
+            result += "} else" + self.space
             result += self.generate_statement(stmt['alternate'])
         return result
 
