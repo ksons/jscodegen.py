@@ -214,8 +214,9 @@ class CodeGenerator:
         result = "if" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
         result += self.generate_statement(stmt['consequent'])
         if 'alternate' in stmt and stmt['alternate']:
-            result = result[:-1]
-            result += "} else" + self.space
+            if self.indentation == 0:
+                result = result[:-1]
+            result += self.space + "else" + self.space
             result += self.generate_statement(stmt['alternate'])
         return result
 
