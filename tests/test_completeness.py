@@ -1,6 +1,11 @@
+import sys
 import unittest as unittest
-from jscodegen.syntax import Syntax
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from jscodegen import CodeGenerator
+from jscodegen.syntax import Syntax
 
 
 def add_cases(generator):
