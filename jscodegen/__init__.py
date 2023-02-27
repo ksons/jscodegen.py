@@ -366,7 +366,19 @@ class CodeGenerator:
         result = "try" + self.space
         result += self.generate_statement(stmt['block'])
         result = result[:-1]
-        result += "\n".join([self.generate_statement(s) for s in stmt['handlers']])
+
+        handlers = []
+
+        hdlr = stmt.get('handler', None)
+        if hdlr:
+            handlers.append(hdlr)
+
+        try:
+            handlers += stmt['handlers']
+        except KeyError:
+            pass
+
+        result += "\n".join([self.generate_statement(s) for s in handlers])
         return result
 
     def catchclause(self, stmt):
