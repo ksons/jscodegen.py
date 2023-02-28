@@ -211,12 +211,22 @@ class CodeGenerator:
 
 
     def ifstatement(self, stmt):
-        result = "if" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
-        result += self.generate_statement(stmt['consequent'])
-        if 'alternate' in stmt and stmt['alternate']:
-            result = result[:-1]
-            result += self.space + "else" + self.space
-            result += self.generate_statement(stmt['alternate'])
+        result = ''
+        while (True):
+            result += "if" + self.space + "(%s)" % self.generate_expression(stmt['test'], Precedence.Sequence) + self.space
+            result += self.generate_statement(stmt['consequent'])
+            if 'alternate' in stmt and stmt['alternate']:
+                if self.indentation == 0:
+                    result = result[:-1]
+                result += self.space + "else" + self.space
+                if stmt['alternate']['type'] == 'IfStatement':
+                    stmt = stmt['alternate']
+                    continue
+                else:
+                    result += self.generate_statement(stmt['alternate'])
+                    break
+            else:
+                break
         return result
 
     def whilestatement(self, stmt):
