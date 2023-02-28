@@ -77,7 +77,10 @@ class CodeGenerator:
     def forstatement(self, stmt):
         result = "for ("
         if stmt['init']:
-            result += self.generate_expression(stmt['init'], Precedence.Sequence)
+            if stmt['init']['type'] == "VariableDeclaration":
+                result += stmt['init']['kind'] + " " + ", ".join(self.generate_statement(d) for d in stmt['init']['declarations'])
+            else:
+                result += self.generate_expression(stmt['init'], Precedence.Sequence)
         result += ";"
 
         if stmt['test']:
