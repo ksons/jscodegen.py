@@ -77,7 +77,10 @@ class CodeGenerator:
     def forstatement(self, stmt):
         result = "for ("
         if stmt['init']:
-            result += self.generate_expression(stmt['init'], Precedence.Sequence)
+            if stmt['init']['type'] == "VariableDeclaration":
+                result += stmt['init']['kind'] + " " + ", ".join(self.generate_statement(d) for d in stmt['init']['declarations'])
+            else:
+                result += self.generate_expression(stmt['init'], Precedence.Sequence)
         result += ";"
 
         if stmt['test']:
@@ -93,6 +96,8 @@ class CodeGenerator:
 
     def forinstatement(self, stmt):
         if stmt['left']['type'] == "VariableDeclaration":
+            if len(stmt['left']['declarations']) != 1:
+                raise Exception("len(stmt['left']['declarations']) must be 1, " + repr(len(stmt['left']['declarations'])) + " given")
             left = stmt['left']['kind'] + " " + self.generate_statement(stmt['left']['declarations'][0])
         else:
             left = self.generate_expression(stmt['left'], Precedence.Call)
