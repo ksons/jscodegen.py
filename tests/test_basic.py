@@ -190,5 +190,9 @@ class BaseTestCase(unittest.TestCase):
         result = jscodegen.generate({"type": "Program", "sourceType": "script", "body": [{"type": "VariableDeclaration", "declarations": [{"type": "VariableDeclarator", "id": {"type": "Identifier", "name": "func"}, "init": {"type": "ArrowFunctionExpression", "generator": False, "async": False, "params": [{"type": "Identifier", "name": "x"}, {"type": "Identifier", "name": "y"}], "body": {"type": "BlockStatement", "body": [{"type": "ReturnStatement", "argument": {"type": "BinaryExpression", "operator": "+", "left": {"type": "Identifier", "name": "x"}, "right": {"type": "Identifier", "name": "y"}}}]}, "expression": False}}], "kind": "var"}]})
         self.assertEqual("var func = (x, y) => {\n  return x + y;\n};\n", result)
 
+    def test_anonymous_function_call(self):
+        result = jscodegen.generate({"type": "Program", "sourceType": "script", "body": [{"type": "ExpressionStatement", "expression": {"type": "CallExpression", "callee": {"type": "FunctionExpression", "expression": False, "async": False,"id": None, "params": [{"type": "Identifier", "name": "a",}],"body": {"type": "BlockStatement", "body": [],}, "generator": False,}, "arguments": [{"type": "Literal", "value": 1, "raw": "1",}],},}],})
+        self.assertEqual("(function(a) {\n}\n)(1);\n", result)
+
 if __name__ == '__main__':
     unittest.main()

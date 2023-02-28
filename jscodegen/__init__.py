@@ -276,7 +276,11 @@ class CodeGenerator:
         return self.parenthesize("".join(result), Precedence.Member, precedence)
 
     def callexpression(self, expr, precedence):
-        result = [self.generate_expression(expr['callee'], Precedence.Call), '(' ]
+        callee = expr['callee']
+        callee_generated = self.generate_expression(callee, Precedence.Call)
+        if callee["type"].startswith("Function"):
+            callee_generated = "(" + callee_generated + ")"
+        result = [callee_generated, '(' ]
         args = []
         for arg in expr['arguments']:
             args.append(self.generate_expression(arg, Precedence.Assignment))
